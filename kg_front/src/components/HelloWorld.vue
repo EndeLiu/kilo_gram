@@ -276,17 +276,21 @@ export default {
     }
   },
   mounted() {
-    var _this = this
-    this.axios.get("person/all")
-    .then(function (response) {
-      _this.testGraph["nodes"] = response.data
-      _this.initGraph(_this.testGraph)
-    })
-    .catch(function (error) {
-      console.log(error)
-    })
+    this.getGraphData()
   },
   methods: {
+    getGraphData(){
+      var _this = this
+      this.axios.get("person/all")
+        .then(function (response) {
+          _this.testGraph["nodes"] = response.data
+          _this.initGraph(_this.testGraph)
+        })
+        .catch(function (error) {
+          console.log(error)
+        })
+    },
+
     initGraph(data){
       var _this = this
       const links = data.links.map(d => Object.create(d));
@@ -297,15 +301,12 @@ export default {
         .force("charge", d3.forceManyBody())
         .force("center", d3.forceCenter(_this.width / 2, _this.height / 2));
 
-      // const svg = d3.create("svg")
-      //   .attr("viewBox", [0, 0, width, height]);
-
       const svg = d3.select(".container")
         .append("svg")
         .attr("viewBox", [0, 0, _this.width, _this.height])
-      svg.call(d3.zoom().on("zoom",function () {
-        g.attr("transform",d3.event.transform)
-      }))
+        .call(d3.zoom().on("zoom",function () {
+          g.attr("transform",d3.event.transform)
+        }))
 
       const g = svg.append("g")
 
@@ -330,6 +331,21 @@ export default {
       node.append("title")
         .text(d => d.id);
 
+      const nodeNameText = g.append("g")
+        .selectAll("text")
+        .data(nodes)
+        .join("text")
+        .text(function (d) {
+          return d.id
+        })
+        .attr("dx",function () {
+          return this.getBoundingClientRect().width/2*(-1)
+        })
+        .attr("dy",50)
+        .attr("class","nodeName")
+
+
+
       simulation.on("tick", () => {
         link
           .attr("x1", d => d.source.x)
@@ -340,6 +356,10 @@ export default {
         node
           .attr("cx", d => d.x)
           .attr("cy", d => d.y);
+
+        nodeNameText
+          .attr("x",d => d.x)
+          .attr("y",d => d.y);
       });
 
     },
@@ -400,6 +420,10 @@ export default {
 
   .node:hover{
     stroke-width:5;
+  }
+
+  .nodeName{
+    fill:white;
   }
 
 </style>
