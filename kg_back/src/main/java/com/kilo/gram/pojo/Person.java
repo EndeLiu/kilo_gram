@@ -54,4 +54,12 @@ public class Person {
     public void setBorn(Long born) {
         this.born = born;
     }
+
+    public Set<Movie> getActedInMovie() {
+        return actedInMovie;
+    }
+
+    public void setActedInMovie(Set<Movie> actedInMovie) {
+        this.actedInMovie = actedInMovie;
+    }
 }

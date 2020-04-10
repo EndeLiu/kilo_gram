@@ -1,6 +1,8 @@
 package com.kilo.gram.controller;
 
+import com.kilo.gram.pojo.CustomLink;
 import com.kilo.gram.pojo.CustomNode;
+import com.kilo.gram.pojo.Movie;
 import com.kilo.gram.pojo.Person;
 import com.kilo.gram.service.PersonService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,9 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/person")
@@ -24,6 +24,18 @@ public class PersonController {
         //return personService.findByName(name);
         Person person = personService.findByName(name);
         return new CustomNode(person.getName(),1);
+    }
+
+    @GetMapping("/actedby/{name}")
+    public List<CustomNode> getActedByName(@PathVariable("name") String name){
+        Person person = personService.findByName(name);
+        List<CustomNode> customNodes = new ArrayList<>();
+        Set<Movie> movieSet = person.getActedInMovie();
+        for(Movie movie : movieSet){
+            customNodes.add(new CustomNode(movie.getTitle(),2));
+            //customLinks.add(new CustomLink(person.getName(),movie.getTitle(),5));
+        }
+        return customNodes;
     }
 
     @GetMapping("/all")
