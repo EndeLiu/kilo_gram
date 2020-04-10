@@ -3,6 +3,10 @@ package com.kilo.gram.pojo;
 import org.neo4j.ogm.annotation.GeneratedValue;
 import org.neo4j.ogm.annotation.Id;
 import org.neo4j.ogm.annotation.NodeEntity;
+import org.neo4j.ogm.annotation.Relationship;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @NodeEntity
 public class Person {
@@ -13,6 +17,10 @@ public class Person {
     private String name;
 
     private Long born;
+
+
+    @Relationship(type = "ACTED_IN", direction = Relationship.OUTGOING)
+    private Set<Movie> actedInMovie = new HashSet<>();
 
     public Person(){
 

@@ -281,9 +281,9 @@ export default {
   methods: {
     getGraphData(){
       var _this = this
-      this.axios.get("person/all")
+      this.axios.get("person/"+'Tom Cruise')
         .then(function (response) {
-          _this.testGraph["nodes"] = response.data
+          _this.testGraph["nodes"] = [response.data]
           _this.initGraph(_this.testGraph)
         })
         .catch(function (error) {
