@@ -12,6 +12,7 @@ export default {
       links:[],
       nodes:[],
       nodesName:[],
+      linksName:[],
       simulation:null,
       scale:1,
       width:800,
@@ -49,8 +50,8 @@ export default {
       const nodes = data.nodes.map(d => Object.create(d));
 
       _this.simulation = d3.forceSimulation(nodes)
-        .force("link", d3.forceLink(links).id(d => d.id))
-        // .force("collide",d3.forceCollide().radius(()=>30))
+        .force("link", d3.forceLink(links).id(d => d.id).distance(100))
+        .force("collide",d3.forceCollide().radius(()=>30))
         .force("charge", d3.forceManyBody().strength(-30))
         .force("center", d3.forceCenter(_this.width / 2, _this.height / 2));
 
@@ -61,16 +62,69 @@ export default {
           g.attr("transform",d3.event.transform)
         }))
 
+      const positiveMarker = svg.append("marker")
+        .attr("id","positiveMarker")
+        .attr("orient","auto")
+        .attr("stroke-width",2)
+        .attr("markerUnits", "strokeWidth")
+        .attr("markerUnits", "userSpaceOnUse")
+        .attr("viewBox", "0 -5 10 10")
+        .attr("refX", 35)
+        .attr("refY", 0)
+        .attr("markerWidth", 12)
+        .attr("markerHeight", 12)
+        .append("path")
+        .attr("d", "M 0 -5 L 10 0 L 0 5")
+        .attr('fill', '#999')
+        .attr("stroke-opacity", 0.6);
+      const negativeMarker = svg.append("marker")
+        .attr("id","negativeMarker")
+        .attr("orient","auto")
+        .attr("stroke-width",2)
+        .attr("markerUnits", "strokeWidth")
+        .attr("markerUnits", "userSpaceOnUse")
+        .attr("viewBox", "0 -5 10 10")
+        .attr("refX", -25)
+        .attr("refY", 0)
+        .attr("markerWidth", 12)
+        .attr("markerHeight", 12)
+        .append("path")
+        .attr("d", "M 10 -5 L 0 0 L 10 5")
+        .attr('fill', '#999')
+        .attr("stroke-opacity", 0.6);
+
+
       const g = svg.append("g")
 
       _this.links = g.append("g")
         .attr("stroke", "#999")
         .attr("stroke-opacity", 0.6)
-        .selectAll("line")
+        .selectAll("path")
         .data(links)
-        .join("line")
+        .join("path")
+        .attr("marker-end", "url(#positiveMarker)")
         .attr("stroke-width", d => Math.sqrt(d.value))
-        .attr("class","link");
+        .attr("class","link")
+        .attr("id",d => d.source+"_"+d.relationship+"_"+d.target)
+
+      _this.linksName = g.append("g")
+        .selectAll("text")
+        .data(links)
+        .join("text")
+        .style('text-anchor','middle')
+        .style('fill', 'white')
+        .style('font-size', '10px')
+        .style('font-weight', 'bold')
+        .append('textPath')
+        .attr(
+          'xlink:href',d =>"#"+d.source+"_"+d.relationship+"_"+d.target
+        )
+        .attr('startOffset','50%')
+        .text(function (d) {
+          return d.relationship
+        });
+
+
 
       _this.nodes = g.append("g")
         .selectAll("circle")
@@ -100,11 +154,38 @@ export default {
 
 
       _this.simulation.on("tick", () => {
+
+        // _this.links
+        //   .attr("d", d => "M "+d.source.x+" "+ d.source.y +" L "+d.target.x+" "+d.target.y);
+
         _this.links
-          .attr("x1", d => d.source.x)
-          .attr("y1", d => d.source.y)
-          .attr("x2", d => d.target.x)
-          .attr("y2", d => d.target.y);
+          .attr("d", function(d){
+            if(d.source.x<d.target.x){
+              return "M "+d.source.x+" "+ d.source.y +" L "+d.target.x+" "+d.target.y
+            }
+            else{
+              return "M "+d.target.x+" "+ d.target.y +" L "+d.source.x+" "+d.source.y
+            }
+          })
+          .attr("marker-end",function (d) {
+            if(d.source.x<d.target.x){
+              return "url(#positiveMarker)"
+            }
+            else{
+              return null
+            }
+          })
+          .attr("marker-start",function (d) {
+            if(d.source.x<d.target.x){
+              return null
+            }
+            else{
+              return "url(#negativeMarker)"
+            }
+          })
+
+
+
 
         _this.nodes
           .attr("cx", d => d.x)
@@ -119,18 +200,41 @@ export default {
 
     updateGraph(data){
       var _this = this
-      const links = data.links.map(d => Object.create(d));
-      const nodes = data.nodes.map(d => Object.create(d));
+      // const links = data.links.map(d => Object.create(d));
+      // const nodes = data.nodes.map(d => Object.create(d));
+      const links = data.links;
+      const nodes = data.nodes;
+
 
       _this.links = _this.links
         .data(links)
         .enter()
-        .append("line")
+        .append("path")
         .attr("stroke", "#999")
         .attr("stroke-opacity", 0.6)
         .attr("stroke-width", d => Math.sqrt(d.value))
+        .attr("marker-end", "url(#positiveMarker)")
         .merge(_this.links)
+        .attr("id",d => d.source+"_"+d.relationship+"_"+d.target)
         .attr("class","link");
+
+      _this.linksName = _this.linksName
+        .data(links)
+        .enter()
+        .append("text")
+        .style('text-anchor','middle')
+        .style('fill', 'white')
+        .style('font-size', '10px')
+        .style('font-weight', 'bold')
+        .append('textPath')
+        .attr(
+          'xlink:href',d =>"#"+d.source+"_"+d.relationship+"_"+d.target
+        )
+        .attr('startOffset','50%')
+        .merge(_this.linksName)
+        .text(function (d) {
+          return d.relationship
+        });
 
       _this.nodes = _this.nodes
         .data(nodes)
@@ -212,9 +316,9 @@ export default {
                 _this.testGraph.links.push({
                   "source":d.id,
                   "target":response.data[i].id,
-                  "value":5
+                  "value":5,
+                  "relationship":"ACTED_IN"
                 })
-                console.log(_this.testGraph.links)
               }
             }
             _this.updateGraph(_this.testGraph)
