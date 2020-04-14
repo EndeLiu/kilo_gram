@@ -22,6 +22,20 @@ public class Person {
     @Relationship(type = "ACTED_IN", direction = Relationship.OUTGOING)
     private Set<Movie> actedInMovie = new HashSet<>();
 
+    @Relationship(type = "PRODUCED", direction = Relationship.OUTGOING)
+    private Set<Movie> producedMovie = new HashSet<>();
+
+    @Relationship(type = "DIRECTED", direction = Relationship.OUTGOING)
+    private Set<Movie> directedMovie = new HashSet<>();
+
+    @Relationship(type = "WROTE", direction = Relationship.OUTGOING)
+    private Set<Movie> wroteMovie = new HashSet<>();
+
+    @Relationship(type = "REVIEWED", direction = Relationship.OUTGOING)
+    private Set<Movie> reviewedMovie = new HashSet<>();
+
+
+
     public Person(){
 
     }
@@ -61,5 +75,37 @@ public class Person {
 
     public void setActedInMovie(Set<Movie> actedInMovie) {
         this.actedInMovie = actedInMovie;
+    }
+
+    public Set<Movie> getProducedMovie() {
+        return producedMovie;
+    }
+
+    public void setProducedMovie(Set<Movie> producedMovie) {
+        this.producedMovie = producedMovie;
+    }
+
+    public Set<Movie> getDirectedMovie() {
+        return directedMovie;
+    }
+
+    public void setDirectedMovie(Set<Movie> directedMovie) {
+        this.directedMovie = directedMovie;
+    }
+
+    public Set<Movie> getWroteMovie() {
+        return wroteMovie;
+    }
+
+    public void setWroteMovie(Set<Movie> wroteMovie) {
+        this.wroteMovie = wroteMovie;
+    }
+
+    public Set<Movie> getReviewedMovie() {
+        return reviewedMovie;
+    }
+
+    public void setReviewedMovie(Set<Movie> reviewedMovie) {
+        this.reviewedMovie = reviewedMovie;
     }
 }

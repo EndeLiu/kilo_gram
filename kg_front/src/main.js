@@ -3,6 +3,8 @@
 import Vue from 'vue'
 import App from './App'
 import router from './router'
+import ElementUI from 'element-ui';
+import 'element-ui/lib/theme-chalk/index.css';
 
 import axios from 'axios'
 import VueAxios from "vue-axios";
@@ -10,6 +12,7 @@ import VueAxios from "vue-axios";
 axios.defaults.baseURL = "/api"
 axios.defaults.withCredentials = true
 Vue.use(VueAxios,axios);
+Vue.use(ElementUI);
 
 Vue.config.productionTip = false
 
