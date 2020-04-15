@@ -98,23 +98,43 @@
             .attr('fill', '#999')
             .attr("stroke-opacity", 0.6);
 
-
           const g = svg.append("g")
 
           _this.links = g.append("g")
             .attr("stroke", "#999")
             .attr("stroke-opacity", 0.6)
             .selectAll("path")
-            .data(links)
+            .data(links,function (d) {
+              if(typeof (d.source) === 'object'){
+                return d.source.id+"_"+d.relationship+"_"+d.target.id
+              }
+              else{
+                return d.source+"_"+d.relationship+"_"+d.target
+              }
+            })
             .join("path")
             .attr("marker-end", "url(#positiveMarker)")
             .attr("stroke-width", d => Math.sqrt(d.value))
             .attr("class","link")
-            .attr("id",d => d.source+"_"+d.relationship+"_"+d.target)
+            .attr("id",function (d) {
+              if(typeof (d.source) === 'object'){
+                return d.source.id+"_"+d.relationship+"_"+d.target.id
+              }
+              else{
+                return d.source+"_"+d.relationship+"_"+d.target
+              }
+            })
 
           _this.linksName = g.append("g")
             .selectAll("text")
-            .data(links)
+            .data(links,function (d) {
+              if(typeof (d.source) === 'object'){
+                return d.source.id+"_"+d.relationship+"_"+d.target.id
+              }
+              else{
+                return d.source+"_"+d.relationship+"_"+d.target
+              }
+            })
             .join("text")
             .style('text-anchor','middle')
             .style('fill', 'white')
@@ -130,10 +150,9 @@
             });
 
 
-
           _this.nodes = g.append("g")
             .selectAll("circle")
-            .data(nodes)
+            .data(nodes,d=>d.id)
             .join("circle")
             .attr("r", 30)
             .attr("class","node")
@@ -148,9 +167,7 @@
             .selectAll("text")
             .data(nodes)
             .join("text")
-            .text(function (d) {
-              return d.id
-            })
+            .text(d => d.id)
             .attr("dx",function () {
               return this.getBoundingClientRect().width/2*(-1)
             })
@@ -201,10 +218,17 @@
           const links = data.links;
           const nodes = data.nodes;
 
+
           _this.links = _this.links
-            .data(links)
-            .enter()
-            .append("path")
+            .data(links,function(d){
+              if(typeof (d.source) === 'object'){
+                return d.source.id+"_"+d.relationship+"_"+d.target.id
+              }
+              else{
+                return d.source+"_"+d.relationship+"_"+d.target
+              }
+            })
+            .join('path')
             .attr("stroke", "#999")
             .attr("stroke-opacity", 0.6)
             .attr("stroke-width", d => Math.sqrt(d.value))
@@ -220,8 +244,26 @@
             })
             .attr("class","link");
 
+          _this.linksName.data(links,function(d){
+            if(typeof (d.source) === 'object'){
+              return d.source.id+"_"+d.relationship+"_"+d.target.id
+            }
+            else{
+              return d.source+"_"+d.relationship+"_"+d.target
+            }
+          })
+            .exit()
+            .remove()
+
           _this.linksName = _this.linksName
-            .data(links)
+            .data(links,function(d){
+              if(typeof (d.source) === 'object'){
+                return d.source.id+"_"+d.relationship+"_"+d.target.id
+              }
+              else{
+                return d.source+"_"+d.relationship+"_"+d.target
+              }
+            })
             .enter()
             .append("text")
             .style('text-anchor','middle')
@@ -247,9 +289,8 @@
 
 
           _this.nodes = _this.nodes
-            .data(nodes)
-            .enter()
-            .append("circle")
+            .data(nodes,d=>d.id)
+            .join("circle")
             .attr("r", 30)
             .attr("class","node")
             .attr("fill", _this.color)
@@ -260,11 +301,9 @@
           _this.nodes.append("title")
             .text(d => d.id);
 
-
           _this.nodesName =  _this.nodesName
             .data(nodes)
-            .enter()
-            .append("text")
+            .join("text")
             .merge(_this.nodesName)
             .text(function (d) {
               return d.id
@@ -324,22 +363,57 @@
         },
 
         getQueryResult(result,currentNode,currentType){
-          for(var i=0;i<result.length;i++){
+          for(var i=0;i<result.length;i++){//result:查询得到的节点组
             let flag = true
+            let tempLinks = {
+              "source":currentNode.name,
+              "target":result[i].id,
+              "value":5,
+              "relationship":currentType
+            }
             for(var j=0;j<this.testGraph.nodes.length;j++){
               if(this.testGraph.nodes[j].id === result[i].id){
                 flag = false
-                break
               }
             }
             if(flag){
               this.testGraph.nodes.push(result[i])
-              this.testGraph.links.push({
-                "source":currentNode.name,
-                "target":result[i].id,
-                "value":5,
-                "relationship":currentType
-              })
+            }
+            else{
+              console.log("已存在的节点")
+              console.log(result[i])
+            }
+
+            this.testGraph.links.push({
+              "source":currentNode.name,
+              "target":result[i].id,
+              "value":5,
+              "relationship":currentType
+            })
+          }
+
+          for(var i=this.testGraph.links.length-1;i>=0;i--){
+            if(this.testGraph.links[i].source.id === currentNode.name && this.testGraph.links[i].relationship !== currentType){
+              let ifRemove = true;
+              //这里的k<result.length刚刚写错了i
+              for(var k=0;k<result.length;k++){
+                if(result[k].id === this.testGraph.links[i].target.id){
+                  ifRemove = false
+                  console.log("不移除此节点"+result[k].id)
+                  break
+                }
+              }
+              if(ifRemove){
+                console.log(this.testGraph.nodes)
+                for(var j=this.testGraph.nodes.length-1;j>=0;j--){
+                  console.log("移除此节点"+this.testGraph.links[i].target.id)
+                  if(this.testGraph.nodes[j].id === this.testGraph.links[i].target.id){
+                    this.testGraph.nodes.splice(j, 1);
+                  }
+                }
+                console.log(this.testGraph.nodes)
+              }
+              this.testGraph.links.splice(i,1)
             }
           }
           this.updateGraph(this.testGraph)
