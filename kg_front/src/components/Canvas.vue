@@ -13,6 +13,7 @@
       components:{DetailPanel},
       data () {
         return {
+          svgArea:null,
           links:[],
           nodes:[],
           nodesName:[],
@@ -24,10 +25,7 @@
           colorList:['#FD7623','#3388B1','#D82952','#F3D737','#409071','#D64E52'],
           testGraph:{
             "nodes": [],
-            // "links":[],
-            "links": [
-              // {"source": "Jack Nicholson", "target": "Emil Eifrem", "value": 5},
-            ]
+            "links": []
           }
         }
       },
@@ -50,59 +48,28 @@
         },
 
         initGraph(data){
-          var _this = this
-          const links = data.links.map(d => Object.create(d));
-          const nodes = data.nodes.map(d => Object.create(d));
+          const links = data.links;
+          const nodes = data.nodes;
 
-          _this.simulation = d3.forceSimulation(nodes)
+          this.simulation = d3.forceSimulation(nodes)
             .force("link", d3.forceLink(links).id(d => d.id).distance(150))
             .force("collide",d3.forceCollide().radius(()=>30))
             .force("charge", d3.forceManyBody().strength(-10))
-            .force("center", d3.forceCenter(_this.width / 2, _this.height / 2));
+            .force("center", d3.forceCenter(this.width / 2, this.height / 2));
 
-          const svg = d3.select(".container")
+          this.svgArea = d3.select(".container")
             .append("svg")
-            .attr("viewBox", [0, 0, _this.width, _this.height])
+            .attr("viewBox", [0, 0, this.width, this.height])
             .call(d3.zoom().on("zoom",function () {
               g.attr("transform",d3.event.transform)
             }))
 
-          const positiveMarker = svg.append("marker")
-            .attr("id","positiveMarker")
-            .attr("orient","auto")
-            .attr("stroke-width",2)
-            .attr("markerUnits", "strokeWidth")
-            .attr("markerUnits", "userSpaceOnUse")
-            .attr("viewBox", "0 -5 10 10")
-            .attr("refX", 35)
-            .attr("refY", 0)
-            .attr("markerWidth", 12)
-            .attr("markerHeight", 12)
-            .append("path")
-            .attr("d", "M 0 -5 L 10 0 L 0 5")
-            .attr('fill', '#999')
-            .attr("stroke-opacity", 0.6);
-          const negativeMarker = svg.append("marker")
-            .attr("id","negativeMarker")
-            .attr("orient","auto")
-            .attr("stroke-width",2)
-            .attr("markerUnits", "strokeWidth")
-            .attr("markerUnits", "userSpaceOnUse")
-            .attr("viewBox", "0 -5 10 10")
-            .attr("refX", -25)
-            .attr("refY", 0)
-            .attr("markerWidth", 12)
-            .attr("markerHeight", 12)
-            .append("path")
-            .attr("d", "M 10 -5 L 0 0 L 10 5")
-            .attr('fill', '#999')
-            .attr("stroke-opacity", 0.6);
+          this.addMarkers();
 
-          const g = svg.append("g")
+          const g = this.svgArea.append("g")
+            .attr("class","content")
 
-          _this.links = g.append("g")
-            .attr("stroke", "#999")
-            .attr("stroke-opacity", 0.6)
+          this.links = g.append("g")
             .selectAll("path")
             .data(links,function (d) {
               if(typeof (d.source) === 'object'){
@@ -125,7 +92,7 @@
               }
             })
 
-          _this.linksName = g.append("g")
+          this.linksName = g.append("g")
             .selectAll("text")
             .data(links,function (d) {
               if(typeof (d.source) === 'object'){
@@ -139,31 +106,28 @@
             .style('text-anchor','middle')
             .style('fill', 'white')
             .style('font-size', '10px')
-            .style('font-weight', 'bold')
+            .style('font-weight', 'bold');
+
+          this.linksName
             .append('textPath')
-            .attr(
-              'xlink:href',d =>"#"+d.source+"_"+d.relationship+"_"+d.target
-            )
+            .attr('xlink:href',d =>"#"+d.source+"_"+d.relationship+"_"+d.target)
             .attr('startOffset','50%')
-            .text(function (d) {
-              return d.relationship
-            });
+            .text(d=>d.relationship);
 
-
-          _this.nodes = g.append("g")
+          this.nodes = g.append("g")
             .selectAll("circle")
             .data(nodes,d=>d.id)
             .join("circle")
             .attr("r", 30)
             .attr("class","node")
-            .attr("fill", _this.color)
-            .on("click",_this.select)
-            .call(_this.drag(_this.simulation));
+            .attr("fill", this.color)
+            .on("click",this.select)
+            .call(this.drag(this.simulation));
 
-          _this.nodes.append("title")
+          this.nodes.append("title")
             .text(d => d.id);
 
-          _this.nodesName = g.append("g")
+          this.nodesName = g.append("g")
             .selectAll("text")
             .data(nodes)
             .join("text")
@@ -174,9 +138,8 @@
             .attr("dy",50)
             .attr("class","nodeName")
 
-
-          _this.simulation.on("tick", () => {
-            _this.links
+          this.simulation.on("tick", () => {
+            this.links
               .attr("d", function(d){
                 if(d.source.x<d.target.x){
                   return "M "+d.source.x+" "+ d.source.y +" L "+d.target.x+" "+d.target.y
@@ -202,24 +165,55 @@
                 }
               })
 
-            _this.nodes
+            this.nodes
               .attr("cx", d => d.x)
               .attr("cy", d => d.y);
 
-            _this.nodesName
+            this.nodesName
               .attr("x",d => d.x)
               .attr("y",d => d.y);
           });
 
         },
 
+        addMarkers(){
+          const positiveMarker = this.svgArea.append("marker")
+            .attr("id","positiveMarker")
+            .attr("orient","auto")
+            .attr("stroke-width",2)
+            .attr("markerUnits", "strokeWidth")
+            .attr("markerUnits", "userSpaceOnUse")
+            .attr("viewBox", "0 -5 10 10")
+            .attr("refX", 35)
+            .attr("refY", 0)
+            .attr("markerWidth", 12)
+            .attr("markerHeight", 12)
+            .append("path")
+            .attr("d", "M 0 -5 L 10 0 L 0 5")
+            .attr('fill', '#999')
+            .attr("stroke-opacity", 0.6);
+          const negativeMarker = this.svgArea.append("marker")
+            .attr("id","negativeMarker")
+            .attr("orient","auto")
+            .attr("stroke-width",2)
+            .attr("markerUnits", "strokeWidth")
+            .attr("markerUnits", "userSpaceOnUse")
+            .attr("viewBox", "0 -5 10 10")
+            .attr("refX", -25)
+            .attr("refY", 0)
+            .attr("markerWidth", 12)
+            .attr("markerHeight", 12)
+            .append("path")
+            .attr("d", "M 10 -5 L 0 0 L 10 5")
+            .attr('fill', '#999')
+            .attr("stroke-opacity", 0.6);
+        },
+
         updateGraph(data){
-          var _this = this
           const links = data.links;
           const nodes = data.nodes;
 
-
-          _this.links = _this.links
+          this.links = this.links
             .data(links,function(d){
               if(typeof (d.source) === 'object'){
                 return d.source.id+"_"+d.relationship+"_"+d.target.id
@@ -233,7 +227,7 @@
             .attr("stroke-opacity", 0.6)
             .attr("stroke-width", d => Math.sqrt(d.value))
             .attr("marker-end", "url(#positiveMarker)")
-            .merge(_this.links)
+            .merge(this.links)
             .attr('id',function (d) {
               if(typeof (d.source) === 'object'){
                 return d.source.id+"_"+d.relationship+"_"+d.target.id
@@ -244,18 +238,7 @@
             })
             .attr("class","link");
 
-          _this.linksName.data(links,function(d){
-            if(typeof (d.source) === 'object'){
-              return d.source.id+"_"+d.relationship+"_"+d.target.id
-            }
-            else{
-              return d.source+"_"+d.relationship+"_"+d.target
-            }
-          })
-            .exit()
-            .remove()
-
-          _this.linksName = _this.linksName
+          this.linksName = this.linksName
             .data(links,function(d){
               if(typeof (d.source) === 'object'){
                 return d.source.id+"_"+d.relationship+"_"+d.target.id
@@ -264,12 +247,13 @@
                 return d.source+"_"+d.relationship+"_"+d.target
               }
             })
-            .enter()
-            .append("text")
+            .join('text')
             .style('text-anchor','middle')
             .style('fill', 'white')
             .style('font-size', '10px')
-            .style('font-weight', 'bold')
+            .style('font-weight', 'bold');
+
+          this.linksName
             .append('textPath')
             .attr(
               'xlink:href',function (d) {
@@ -282,29 +266,26 @@
               }
             )
             .attr('startOffset','50%')
-            .merge(_this.linksName)
-            .text(function (d) {
-              return d.relationship
-            });
+            .merge(this.linksName)
+            .text(d=> d.relationship);
 
-
-          _this.nodes = _this.nodes
+          this.nodes = this.nodes
             .data(nodes,d=>d.id)
             .join("circle")
             .attr("r", 30)
             .attr("class","node")
-            .attr("fill", _this.color)
-            .merge(_this.nodes)
-            .on("click",_this.select)
-            .call(_this.drag(_this.simulation));
+            .attr("fill", this.color)
+            .merge(this.nodes)
+            .on("click",this.select)
+            .call(this.drag(this.simulation));
 
-          _this.nodes.append("title")
+          this.nodes.append("title")
             .text(d => d.id);
 
-          _this.nodesName =  _this.nodesName
+          this.nodesName =  this.nodesName
             .data(nodes)
             .join("text")
-            .merge(_this.nodesName)
+            .merge(this.nodesName)
             .text(function (d) {
               return d.id
             })
@@ -314,11 +295,9 @@
             .attr("dy",50)
             .attr("class","nodeName")
 
-
-          _this.simulation.nodes(nodes)
-          _this.simulation.force("link").links(links)
-          _this.simulation.alpha(0.2).restart()
-
+          this.simulation.nodes(nodes)
+          this.simulation.force("link").links(links)
+          this.simulation.alpha(0.2).restart()
         },
 
         color(d) {
@@ -365,12 +344,6 @@
         getQueryResult(result,currentNode,currentType){
           for(var i=0;i<result.length;i++){//result:查询得到的节点组
             let flag = true
-            let tempLinks = {
-              "source":currentNode.name,
-              "target":result[i].id,
-              "value":5,
-              "relationship":currentType
-            }
             for(var j=0;j<this.testGraph.nodes.length;j++){
               if(this.testGraph.nodes[j].id === result[i].id){
                 flag = false
@@ -383,7 +356,6 @@
               console.log("已存在的节点")
               console.log(result[i])
             }
-
             this.testGraph.links.push({
               "source":currentNode.name,
               "target":result[i].id,
@@ -395,7 +367,6 @@
           for(var i=this.testGraph.links.length-1;i>=0;i--){
             if(this.testGraph.links[i].source.id === currentNode.name && this.testGraph.links[i].relationship !== currentType){
               let ifRemove = true;
-              //这里的k<result.length刚刚写错了i
               for(var k=0;k<result.length;k++){
                 if(result[k].id === this.testGraph.links[i].target.id){
                   ifRemove = false
@@ -418,7 +389,6 @@
           }
           this.updateGraph(this.testGraph)
         }
-
       }
     }
 </script>
